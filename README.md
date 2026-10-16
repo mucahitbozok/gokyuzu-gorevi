@@ -1,6 +1,10 @@
 # ✈️ Gökyüzü Görevi: Türk Bayraklarını Topla 🇹🇷
 
+[![Canlı Oyna](https://img.shields.io/badge/🎮_Canlı_Oyna-GitHub_Pages-brightgreen?style=for-the-badge)](https://mucahitbozok.github.io/gokyuzu-gorevi/)
+
 İlkokul öğrencileri ve eğitimciler için özel olarak geliştirilmiş, okul akıllı tahtalarında (ETAP, Vestel, Arçelik, Promethean vb.) ve masaüstü tarayıcılarda sorunsuz çalışan **2D Arcade Uçuş Oyunu**.
+
+🌐 **Canlı Oyun Linki:** [https://mucahitbozok.github.io/gokyuzu-gorevi/](https://mucahitbozok.github.io/gokyuzu-gorevi/)
 
 Bu proje, öğrencilerin yön bulma, el-göz koordinasyonu, örüntü fark etme ve karar verme reflekslerini eğlenceli ve güvenli bir ortamda geliştirmeyi amaçlar (CodeWeek etkinlikleri ve bilişim dersleri için uygundur).
 
