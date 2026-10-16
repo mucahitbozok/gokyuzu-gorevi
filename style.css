@@ -1,0 +1,710 @@
+/* ==========================================================================
+   GÖKYÜZÜ GÖREVİ - TÜRK BAYRAKLARINI TOPLA
+   Okul Akıllı Tahtaları ve Masaüstü Tarayıcılar İçin Optimize Edilmiş Stil Dosyası
+   ========================================================================== */
+
+:root {
+  --primary-red: #e30a17;
+  --primary-red-hover: #c40813;
+  --accent-gold: #ffc107;
+  --accent-gold-dark: #ffa000;
+  --sky-blue-top: #5bc0f8;
+  --sky-blue-bottom: #cbf1f5;
+  --hud-bg: rgba(15, 23, 42, 0.85);
+  --card-bg: rgba(255, 255, 255, 0.96);
+  --text-dark: #1e293b;
+  --text-light: #ffffff;
+  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 30px;
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 10px 25px -3px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 20px 35px -5px rgba(0, 0, 0, 0.35);
+}
+
+/* Sayfa Sıfırlama */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0c1a2e;
+  font-family: var(--font-family);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+
+/* Ana Konteyner: 16:9 En Boy Oranı Korumalı ve Ekranı Maksimum Doldurur */
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 56.25vw; /* 16:9 oranı */
+  max-height: 100vh;
+  max-width: 177.78vh; /* 16:9 oranı */
+  background: linear-gradient(180deg, var(--sky-blue-top) 0%, var(--sky-blue-bottom) 100%);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Oyun Çizim Tuvali (Canvas) */
+#gameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+  touch-action: none;
+  cursor: grab;
+}
+
+#gameCanvas:active {
+  cursor: grabbing;
+}
+
+/* ==========================================================================
+   ÜST BİLGİ ÇUBUĞU (HUD)
+   ========================================================================== */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: clamp(50px, 7vh, 75px);
+  padding: 0 clamp(10px, 2vw, 25px);
+  background: var(--hud-bg);
+  backdrop-filter: blur(8px);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  color: var(--text-light);
+  box-shadow: var(--shadow-sm);
+  pointer-events: auto;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.hud.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hud-group {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 18px);
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: clamp(4px, 0.8vh, 8px) clamp(10px, 1.2vw, 16px);
+  border-radius: var(--radius-md);
+  font-size: clamp(14px, 1.6vw, 20px);
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hud-icon {
+  font-size: 1.2em;
+}
+
+.hud-label {
+  color: #cbd5e1;
+  font-size: 0.9em;
+}
+
+.hud-value {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.badge-flag {
+  background: rgba(227, 10, 23, 0.35);
+  border-color: rgba(227, 10, 23, 0.7);
+}
+
+.badge-score {
+  background: rgba(255, 193, 7, 0.25);
+  border-color: rgba(255, 193, 7, 0.6);
+}
+
+.badge-level {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.badge-lives {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.lives-container {
+  letter-spacing: 3px;
+  font-size: 1.1em;
+}
+
+/* HUD Düğmeleri */
+.hud-btn {
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: clamp(6px, 1vh, 10px) clamp(12px, 1.2vw, 18px);
+  border-radius: var(--radius-md);
+  font-size: clamp(14px, 1.4vw, 18px);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.hud-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+.hud-btn:active {
+  transform: translateY(1px) scale(0.96);
+}
+
+/* ==========================================================================
+   SEVİYE GEÇİŞ BANNERI
+   ========================================================================== */
+.level-banner {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  z-index: 25;
+  pointer-events: none;
+  animation: bannerPop 2.5s ease-in-out forwards;
+}
+
+.level-banner.hidden {
+  display: none;
+}
+
+.banner-content {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #ffffff;
+  padding: clamp(15px, 2.5vh, 30px) clamp(30px, 4vw, 60px);
+  border-radius: var(--radius-xl);
+  border: 4px solid var(--accent-gold);
+  box-shadow: 0 0 35px rgba(255, 193, 7, 0.6), var(--shadow-lg);
+  text-align: center;
+}
+
+.banner-stars {
+  font-size: clamp(20px, 2.5vw, 32px);
+  margin-bottom: 5px;
+}
+
+.banner-content h2 {
+  font-size: clamp(24px, 3.2vw, 42px);
+  font-weight: 900;
+  color: var(--accent-gold);
+  letter-spacing: 2px;
+}
+
+.banner-content p {
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-top: 5px;
+}
+
+@keyframes bannerPop {
+  0% { transform: translateX(-50%) scale(0.6); opacity: 0; }
+  15% { transform: translateX(-50%) scale(1.08); opacity: 1; }
+  25% { transform: translateX(-50%) scale(1); opacity: 1; }
+  80% { transform: translateX(-50%) scale(1); opacity: 1; }
+  100% { transform: translateX(-50%) scale(0.9) translateY(-20px); opacity: 0; }
+}
+
+/* ==========================================================================
+   AKILLI TAHTA DOKUNMATİK KONTROLLER (D-PAD)
+   ========================================================================== */
+.touch-controls {
+  position: absolute;
+  bottom: clamp(15px, 2.5vh, 30px);
+  right: clamp(15px, 2.5vw, 35px);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.touch-controls.hidden {
+  display: none !important;
+}
+
+.dpad-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(6px);
+  padding: 10px;
+  border-radius: var(--radius-xl);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: var(--shadow-md);
+}
+
+.dpad-middle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dpad-center {
+  width: clamp(40px, 5vw, 55px);
+  height: clamp(40px, 5vw, 55px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4em;
+  opacity: 0.6;
+}
+
+.dpad-btn {
+  width: clamp(55px, 6.5vw, 75px);
+  height: clamp(55px, 6.5vw, 75px);
+  background: linear-gradient(145deg, #334155, #1e293b);
+  color: #ffffff;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-radius: var(--radius-lg);
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.dpad-btn:active, .dpad-btn.pressed {
+  background: var(--primary-red);
+  border-color: #ffffff;
+  transform: scale(0.92);
+  box-shadow: 0 0 15px rgba(227, 10, 23, 0.8);
+}
+
+.touch-hint {
+  margin-top: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #f8fafc;
+  font-size: clamp(11px, 1.1vw, 14px);
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   MODAL VE EKRAN KAPLAMALARI (START, PAUSE, WIN, GAMEOVER)
+   ========================================================================== */
+.game-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 20, 38, 0.78);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.game-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.game-overlay.hidden {
+  display: none !important;
+}
+
+/* Ortak Kart Tasarımı */
+.modal-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+  border: 4px solid #ffffff;
+  color: var(--text-dark);
+  text-align: center;
+  max-width: 900px;
+  width: 92%;
+  max-height: 92%;
+  overflow-y: auto;
+  padding: clamp(20px, 3.5vh, 40px) clamp(25px, 4vw, 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: cardScaleUp 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cardScaleUp {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.small-card {
+  max-width: 550px;
+}
+
+/* Rozetler ve Başlıklar */
+.national-badge {
+  background: var(--primary-red);
+  color: white;
+  font-size: clamp(12px, 1.3vw, 16px);
+  font-weight: 800;
+  letter-spacing: 3px;
+  padding: 4px 16px;
+  border-radius: var(--radius-xl);
+  display: inline-block;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 10px rgba(227, 10, 23, 0.4);
+}
+
+.celebration-badge {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+  color: #1e293b;
+  font-size: clamp(14px, 1.5vw, 18px);
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 6px 20px;
+  border-radius: var(--radius-xl);
+  display: inline-block;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.5);
+}
+
+.alert-badge {
+  background: #64748b;
+  color: white;
+  font-size: clamp(13px, 1.4vw, 17px);
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 6px 20px;
+  border-radius: var(--radius-xl);
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.modal-badge {
+  background: #e2e8f0;
+  color: #334155;
+  font-size: clamp(13px, 1.4vw, 16px);
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 4px 16px;
+  border-radius: var(--radius-xl);
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.game-title {
+  font-size: clamp(28px, 4.5vw, 56px);
+  font-weight: 900;
+  color: var(--primary-red);
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.08);
+  line-height: 1.1;
+  letter-spacing: 1px;
+}
+
+.game-subtitle {
+  font-size: clamp(18px, 2.5vw, 30px);
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 4px;
+}
+
+.modal-title {
+  font-size: clamp(24px, 3.5vw, 42px);
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.win-title {
+  color: #166534;
+}
+
+.gameover-title {
+  color: #991b1b;
+}
+
+.modal-desc {
+  font-size: clamp(15px, 1.8vw, 22px);
+  color: #475569;
+  line-height: 1.4;
+  margin-top: 8px;
+  max-width: 700px;
+}
+
+/* Öğrenme Hedefi Kutusu */
+.learning-target {
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  color: #166534;
+  padding: clamp(8px, 1.4vh, 14px) clamp(14px, 2vw, 24px);
+  border-radius: var(--radius-md);
+  font-size: clamp(14px, 1.5vw, 18px);
+  margin: clamp(12px, 2vh, 20px) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Oyun Kuralları Kartları Izgarası */
+.how-to-play-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(10px, 1.5vw, 20px);
+  margin-bottom: clamp(15px, 2.5vh, 25px);
+  width: 100%;
+}
+
+.rule-box {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: clamp(12px, 2vh, 20px) clamp(10px, 1.2vw, 16px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rule-icon {
+  font-size: clamp(28px, 3.5vw, 42px);
+  margin-bottom: 6px;
+}
+
+.rule-box h3 {
+  font-size: clamp(15px, 1.6vw, 20px);
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.rule-box p {
+  font-size: clamp(12px, 1.3vw, 16px);
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* Sonuç İstatistik Hapları */
+.results-stats {
+  display: flex;
+  gap: clamp(10px, 2vw, 24px);
+  margin: clamp(18px, 3vh, 32px) 0;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  background: #f1f5f9;
+  border: 2px solid #cbd5e1;
+  padding: clamp(10px, 1.8vh, 18px) clamp(16px, 2.5vw, 30px);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+}
+
+.stat-pill.highlight {
+  background: #fefce8;
+  border-color: var(--accent-gold);
+}
+
+.stat-title {
+  font-size: clamp(12px, 1.3vw, 16px);
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.stat-num {
+  font-size: clamp(22px, 3vw, 36px);
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.stat-pill.highlight .stat-num {
+  color: #b45309;
+}
+
+/* ==========================================================================
+   BUTON VE ETKİLEŞİM STİLLERİ
+   ========================================================================== */
+.card-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 2vh, 18px);
+  width: 100%;
+}
+
+.settings-bar {
+  display: flex;
+  gap: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: clamp(12px, 2vw, 24px);
+  justify-content: center;
+  width: 100%;
+}
+
+.modal-actions.vertical {
+  flex-direction: column;
+  max-width: 320px;
+  gap: 12px;
+}
+
+/* Birincil Buton (Büyük, Dikkat Çekici, Dokunması Kolay) */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-red) 0%, #b91c1c 100%);
+  color: #ffffff;
+  border: 3px solid #fecaca;
+  padding: clamp(12px, 2vh, 20px) clamp(28px, 4vw, 55px);
+  border-radius: var(--radius-xl);
+  font-size: clamp(18px, 2.4vw, 30px);
+  font-weight: 900;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 10px 25px rgba(227, 10, 23, 0.45);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #ef4444 0%, var(--primary-red) 100%);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 15px 30px rgba(227, 10, 23, 0.6);
+}
+
+.btn-primary:active {
+  transform: translateY(2px) scale(0.97);
+  box-shadow: 0 4px 12px rgba(227, 10, 23, 0.4);
+}
+
+/* İkincil Buton */
+.btn-secondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 2px solid #cbd5e1;
+  padding: clamp(8px, 1.5vh, 14px) clamp(16px, 2.5vw, 28px);
+  border-radius: var(--radius-lg);
+  font-size: clamp(14px, 1.6vw, 20px);
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px) scale(0.97);
+}
+
+/* Nabız Efekti */
+.pulse-btn {
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(227, 10, 23, 0.6); }
+  70% { box-shadow: 0 0 0 16px rgba(227, 10, 23, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(227, 10, 23, 0); }
+}
+
+/* ==========================================================================
+   AKILLI TAHTA VE KÜÇÜK EKRAN UYUMLULUKLARI
+   ========================================================================== */
+@media (max-width: 900px) {
+  .how-to-play-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .rule-box {
+    padding: 8px 12px;
+    flex-direction: row;
+    text-align: left;
+    gap: 12px;
+  }
+
+  .rule-icon {
+    font-size: 28px;
+    margin-bottom: 0;
+  }
+
+  .rule-box h3 {
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-height: 600px) {
+  .learning-target {
+    display: none;
+  }
+  
+  .card-header {
+    margin-bottom: 4px;
+  }
+  
+  .modal-card {
+    padding: 15px 25px;
+  }
+}

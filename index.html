@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gökyüzü Görevi: Türk Bayraklarını Topla</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ana Oyun Konteyneri (16:9 oranında ölçeklenir, akıllı tahta uyumlu) -->
+  <div id="game-container">
+    
+    <!-- Üst Bilgi Çubuğu (HUD) -->
+    <header id="game-hud" class="hud hidden">
+      <div class="hud-group">
+        <div class="hud-item badge-flag">
+          <span class="hud-icon">🇹🇷</span>
+          <span class="hud-label">Bayrak:</span>
+          <span id="hud-flags" class="hud-value">0 / 15</span>
+        </div>
+        <div class="hud-item badge-score">
+          <span class="hud-icon">⭐</span>
+          <span class="hud-label">Puan:</span>
+          <span id="hud-score" class="hud-value">0</span>
+        </div>
+      </div>
+
+      <div class="hud-group">
+        <div class="hud-item badge-level">
+          <span class="hud-icon">✈️</span>
+          <span id="hud-level" class="hud-value">Seviye 1: İlk Uçuş</span>
+        </div>
+      </div>
+
+      <div class="hud-group">
+        <div class="hud-item badge-lives">
+          <span class="hud-label">Can:</span>
+          <span id="hud-lives" class="hud-value lives-container">❤️❤️❤️</span>
+        </div>
+        <button id="btn-pause-game" class="hud-btn" title="Oyunu Duraklat" aria-label="Duraklat">
+          <span class="btn-icon">⏸️</span>
+          <span class="btn-text">Duraklat</span>
+        </button>
+        <button id="btn-sound-hud" class="hud-btn btn-sound-toggle" title="Sesi Aç / Kapat" aria-label="Sesi Aç veya Kapat">
+          <span class="sound-icon">🔊</span>
+        </button>
+        <button id="btn-fullscreen-hud" class="hud-btn btn-fullscreen-toggle" title="Tam Ekran" aria-label="Tam Ekran Yap">
+          <span class="fs-icon">⛶</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Oyun Çizim Alanı -->
+    <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+    <!-- Seviye Geçiş ve Özel Başarı Bildirim Bannerı -->
+    <div id="level-banner" class="level-banner hidden">
+      <div class="banner-content">
+        <div class="banner-stars">✨ 🌟 ✨</div>
+        <h2 id="banner-title">TEBRİKLER!</h2>
+        <p id="banner-subtitle">Seviye 2: Bulutların Arasında</p>
+      </div>
+    </div>
+
+    <!-- Akıllı Tahta Dokunmatik Kontrolleri (Büyük Dokunma Düğmeleri) -->
+    <div id="touch-controls" class="touch-controls hidden">
+      <div class="dpad-container">
+        <button class="dpad-btn dpad-up" id="btn-dpad-up" aria-label="Yukarı">▲</button>
+        <div class="dpad-middle">
+          <button class="dpad-btn dpad-left" id="btn-dpad-left" aria-label="Sola">◀</button>
+          <div class="dpad-center">🎯</div>
+          <button class="dpad-btn dpad-right" id="btn-dpad-right" aria-label="Sağa">▶</button>
+        </div>
+        <button class="dpad-btn dpad-down" id="btn-dpad-down" aria-label="Aşağı">▼</button>
+      </div>
+      <div class="touch-hint">
+        <span>👆 Uçağı parmağınla da sürükleyebilirsin!</span>
+      </div>
+    </div>
+
+    <!-- EKRAN 1: Başlangıç Ekranı -->
+    <div id="screen-start" class="game-overlay active">
+      <div class="modal-card start-card">
+        <div class="card-header">
+          <div class="national-badge">🇹🇷 TÜRKİYE 🇹🇷</div>
+          <h1 class="game-title">GÖKYÜZÜ GÖREVİ</h1>
+          <h2 class="game-subtitle">Türk Bayraklarını Topla!</h2>
+        </div>
+
+        <div class="card-body">
+          <div class="learning-target">
+            <span class="badge-icon">🎯</span>
+            <strong>Öğrenme Hedefi:</strong> Doğru yönü seç, rotanı planla ve engellerden kaç!
+          </div>
+
+          <div class="how-to-play-grid">
+            <div class="rule-box collect-box">
+              <div class="rule-icon">🇹🇷</div>
+              <h3>Görevin</h3>
+              <p>Gökyüzündeki <strong>15 Türk bayrağını</strong> topla ve her bayrakta <strong>+10 puan</strong> kazan!</p>
+            </div>
+            <div class="rule-box avoid-box">
+              <div class="rule-icon">⛈️</div>
+              <h3>Engeller</h3>
+              <p>Fırtına bulutları, kuş sürüleri, sıcak hava balonları ve zirvelerden kaç!</p>
+            </div>
+            <div class="rule-box controls-box">
+              <div class="rule-icon">🕹️</div>
+              <h3>Kontroller</h3>
+              <p>Ok tuşları, <strong>WASD</strong> veya akıllı tahtada <strong>parmağınla sürükleyerek</strong> uçur.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button id="btn-start-game" class="btn-primary pulse-btn">
+            <span class="btn-icon">🚀</span>
+            <span class="btn-label">OYUNA BAŞLA</span>
+          </button>
+
+          <div class="settings-bar">
+            <button id="btn-sound-start" class="btn-secondary btn-sound-toggle">
+              <span class="sound-icon">🔊</span>
+              <span class="sound-text">Ses: Açık</span>
+            </button>
+            <button id="btn-fullscreen-start" class="btn-secondary btn-fullscreen-toggle">
+              <span class="fs-icon">⛶</span>
+              <span>Tam Ekran</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EKRAN 2: Duraklatma Ekranı -->
+    <div id="screen-pause" class="game-overlay hidden">
+      <div class="modal-card small-card">
+        <div class="modal-badge">⏸️ MOLA</div>
+        <h2 class="modal-title">Oyun Duraklatıldı</h2>
+        <p class="modal-desc">Uçuşun güvende. Hazır olduğunda devam edebilirsin!</p>
+
+        <div class="modal-actions vertical">
+          <button id="btn-resume-game" class="btn-primary">
+            <span class="btn-icon">▶️</span>
+            <span>Uçuşa Devam Et</span>
+          </button>
+          <button id="btn-restart-from-pause" class="btn-secondary">
+            <span class="btn-icon">🔄</span>
+            <span>Yeniden Başlat</span>
+          </button>
+          <button id="btn-menu-from-pause" class="btn-secondary">
+            <span class="btn-icon">🏠</span>
+            <span>Ana Menüye Dön</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EKRAN 3: Kazanma Ekranı (Görev Başarıyla Tamamlandı) -->
+    <div id="screen-win" class="game-overlay hidden">
+      <div class="modal-card win-card">
+        <div class="celebration-badge">🏆 GÖREV BAŞARILI! 🏆</div>
+        <h2 class="modal-title win-title">Harika Uçuş, Genç Pilot!</h2>
+        <p class="modal-desc">
+          Bütün <strong>Türk bayraklarını</strong> gururla topladın ve gökyüzü görevini üstün başarıyla tamamladın!
+        </p>
+
+        <div class="results-stats">
+          <div class="stat-pill">
+            <span class="stat-title">Toplanan Bayrak</span>
+            <span id="win-flags" class="stat-num">15 / 15 🇹🇷</span>
+          </div>
+          <div class="stat-pill highlight">
+            <span class="stat-title">Toplam Skor</span>
+            <span id="win-score" class="stat-num">150 ⭐</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-title">Kalan Can</span>
+            <span id="win-lives" class="stat-num">❤️❤️❤️</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-replay-win" class="btn-primary pulse-btn">
+            <span class="btn-icon">🔄</span>
+            <span>Yeniden Oyna</span>
+          </button>
+          <button id="btn-menu-win" class="btn-secondary">
+            <span class="btn-icon">🏠</span>
+            <span>Ana Menü</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EKRAN 4: Canlar Bitti Ekranı (Görev Sonu) -->
+    <div id="screen-gameover" class="game-overlay hidden">
+      <div class="modal-card gameover-card">
+        <div class="alert-badge">🛬 GÖREV BİTTİ</div>
+        <h2 class="modal-title gameover-title">Uçağın İniş Yaptı!</h2>
+        <p class="modal-desc">
+          Canların tükendi ama pes etmek yok! Her deneme seni daha usta bir pilot yapacak.
+        </p>
+
+        <div class="results-stats">
+          <div class="stat-pill">
+            <span class="stat-title">Toplanan Bayrak</span>
+            <span id="gameover-flags" class="stat-num">0 / 15 🇹🇷</span>
+          </div>
+          <div class="stat-pill highlight">
+            <span class="stat-title">Kazanılan Puan</span>
+            <span id="gameover-score" class="stat-num">0 ⭐</span>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-title">Ulaşılan Seviye</span>
+            <span id="gameover-level" class="stat-num">Seviye 1</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-restart-gameover" class="btn-primary pulse-btn">
+            <span class="btn-icon">🔄</span>
+            <span>Tekrar Dene</span>
+          </button>
+          <button id="btn-menu-gameover" class="btn-secondary">
+            <span class="btn-icon">🏠</span>
+            <span>Ana Menü</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
